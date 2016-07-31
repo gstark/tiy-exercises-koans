@@ -89,55 +89,6 @@ module Neo
     end
   end
 
-  module Color
-    #shamelessly stolen (and modified) from redgreen
-    COLORS = {
-      :clear   => 0,  :black   => 30, :red   => 31,
-      :green   => 32, :yellow  => 33, :blue  => 34,
-      :magenta => 35, :cyan    => 36,
-    }
-
-    module_function
-
-    COLORS.each do |color, value|
-      module_eval "def #{color}(string); colorize(string, #{value}); end"
-      module_function color
-    end
-
-    def colorize(string, color_value)
-      if use_colors?
-        color(color_value) + string + color(COLORS[:clear])
-      else
-        string
-      end
-    end
-
-    def color(color_value)
-      "\e[#{color_value}m"
-    end
-
-    def use_colors?
-      return false if ENV['NO_COLOR']
-      if ENV['ANSI_COLOR'].nil?
-        if using_windows?
-          using_win32console
-        else
-          return true
-        end
-      else
-        ENV['ANSI_COLOR'] =~ /^(t|y)/i
-      end
-    end
-
-    def using_windows?
-      File::ALT_SEPARATOR
-    end
-
-    def using_win32console
-      defined? Win32::Console
-    end
-  end
-
   module Assertions
     FailedAssertionError = Class.new(StandardError)
 
@@ -211,7 +162,7 @@ module Neo
       unless step.passed?
         @failed_test = step
         @failure = step.failure
-        @observations << Color.red("#{step.koan_file}##{step.name} has damaged your karma.")
+        @observations << "#{step.koan_file}##{step.name} has damaged your karma."
         throw :neo_exit
       end
     end
@@ -290,23 +241,11 @@ ENDTEXT
     def guide_through_error
       puts
       puts "The answers you seek..."
-      puts Color.red(indent(failure.message).join)
+      puts indent(failure.message).join
       puts
       puts "Please meditate on the following code:"
-      puts embolden_first_line_only(indent(find_interesting_lines(failure.backtrace)))
+      puts indent(find_interesting_lines(failure.backtrace))
       puts
-    end
-
-    def embolden_first_line_only(text)
-      first_line = true
-      text.collect { |t|
-        if first_line
-          first_line = false
-          Color.red(t)
-        else
-          Color.cyan(t)
-        end
-      }
     end
 
     def indent(text)
